@@ -1,0 +1,174 @@
+create table users
+(
+    id            uuid                                not null
+        constraint users_pk
+            primary key,
+    login         text                                not null,
+    email         text                                not null,
+    password_hash text                                not null,
+    created_at    timestamp default CURRENT_TIMESTAMP not null,
+    updated_at    timestamp default CURRENT_TIMESTAMP not null
+);
+
+alter table users
+    owner to oboznyi;
+
+create unique index users_id_uindex
+    on users (id);
+
+create table users_data
+(
+    user_id          uuid
+        constraint user_data_users_id_fk
+            references users,
+    full_name        text                                       not null,
+    date_of_birth    date                                       not null,
+    number           varchar(50)                                not null,
+    address          text                                       not null,
+    created_at       timestamp        default CURRENT_TIMESTAMP not null,
+    updated_at       timestamp        default CURRENT_TIMESTAMP not null,
+    discount_percent integer          default 0,
+    discount_amount  double precision default 0
+);
+
+alter table users_data
+    owner to oboznyi;
+
+create table users_access_token
+(
+    user_id      uuid                                not null
+        constraint users_access_token_users_id_fk
+            references users,
+    access_token text                                not null,
+    created_at   timestamp default CURRENT_TIMESTAMP not null,
+    id           uuid                                not null
+);
+
+alter table users_access_token
+    owner to oboznyi;
+
+create table users_refresh_token
+(
+    user_id       uuid not null
+        constraint users_refresh_token_users_id_fk
+            references users,
+    refresh_token text not null,
+    created_at    timestamp default CURRENT_TIMESTAMP,
+    id            uuid
+);
+
+alter table users_refresh_token
+    owner to oboznyi;
+
+create table products_categories
+(
+    id            integer   default nextval('categories_id_seq'::regclass) not null
+        constraint categories_pk
+            primary key,
+    category_name text                                                     not null,
+    created_at    timestamp default CURRENT_TIMESTAMP
+);
+
+alter table products_categories
+    owner to oboznyi;
+
+create unique index categories_id_uindex
+    on products_categories (id);
+
+create table products
+(
+    id                  serial
+        constraint products_pk
+            primary key,
+    product_name        text                                not null,
+    product_category    integer                             not null
+        constraint products_categories_id_fk
+            references products_categories,
+    external_product_id integer                             not null,
+    created_at          timestamp default CURRENT_TIMESTAMP not null
+);
+
+alter table products
+    owner to oboznyi;
+
+create unique index products_id_uindex
+    on products (id);
+
+create table suppliers
+(
+    id                   serial
+        constraint suppliers_pk
+            primary key,
+    external_supplier_id integer                             not null,
+    supplier_name        text                                not null,
+    created_at           timestamp default CURRENT_TIMESTAMP not null
+);
+
+alter table suppliers
+    owner to oboznyi;
+
+create unique index suppliers_id_uindex
+    on suppliers (id);
+
+create table products_suppliers
+(
+    product_id           integer                             not null
+        constraint products_suppliers_products_id_fk
+            references products,
+    supplier_id          integer                             not null
+        constraint products_suppliers_suppliers_id_fk
+            references suppliers,
+    external_product_id  integer,
+    external_supplier_id integer                             not null,
+    price                double precision                    not null,
+    image                text                                not null,
+    description          text                                not null,
+    quantity             integer   default 100,
+    created_at           timestamp default CURRENT_TIMESTAMP not null,
+    updated_at           timestamp default CURRENT_TIMESTAMP not null
+);
+
+alter table products_suppliers
+    owner to oboznyi;
+
+create table orders
+(
+    id               uuid                                                not null
+        constraint orders_pk
+            primary key,
+    user_id          uuid                                                not null
+        constraint orders_users_id_fk
+            references users,
+    total_price      double precision                                    not null,
+    status           char(20)         default 'empty'::character varying not null,
+    payment_method   char(20),
+    created_at       timestamp        default CURRENT_TIMESTAMP          not null,
+    updated_at       timestamp        default CURRENT_TIMESTAMP          not null,
+    discount_amount  double precision default 0,
+    discount_percent integer          default 0
+);
+
+alter table orders
+    owner to oboznyi;
+
+create unique index orders_id_uindex
+    on orders (id);
+
+create table orders_products
+(
+    id                  uuid                                not null,
+    product_id          integer                             not null
+        constraint orders_products_products_id_fk
+            references products,
+    order_id            uuid                                not null
+        constraint orders_products_orders_id_fk
+            references orders,
+    numbers_of_products integer,
+    purchase_price      double precision                    not null,
+    created_at          timestamp default CURRENT_TIMESTAMP not null,
+    updated_at          timestamp default CURRENT_TIMESTAMP not null
+);
+
+alter table orders_products
+    owner to oboznyi;
+
