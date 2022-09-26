@@ -11,7 +11,7 @@ create table users
 );
 
 alter table users
-    owner to oboznyi;
+    owner to golang;
 
 create unique index users_id_uindex
     on users (id);
@@ -25,40 +25,44 @@ create table users_data
     date_of_birth    date                                       not null,
     number           varchar(50)                                not null,
     address          text                                       not null,
-    created_at       timestamp        default CURRENT_TIMESTAMP not null,
-    updated_at       timestamp        default CURRENT_TIMESTAMP not null,
     discount_percent integer          default 0,
-    discount_amount  double precision default 0
+    discount_amount  double precision default 0,
+    created_at       timestamp        default CURRENT_TIMESTAMP not null,
+    updated_at       timestamp        default CURRENT_TIMESTAMP not null
 );
 
 alter table users_data
-    owner to oboznyi;
+    owner to golang;
 
 create table users_access_token
 (
+    id           uuid                                not null,
     user_id      uuid                                not null
         constraint users_access_token_users_id_fk
             references users,
     access_token text                                not null,
-    created_at   timestamp default CURRENT_TIMESTAMP not null,
-    id           uuid                                not null
+    created_at   timestamp default CURRENT_TIMESTAMP not null
 );
 
 alter table users_access_token
-    owner to oboznyi;
+    owner to golang;
 
 create table users_refresh_token
 (
+    id            uuid,
     user_id       uuid not null
         constraint users_refresh_token_users_id_fk
             references users,
     refresh_token text not null,
-    created_at    timestamp default CURRENT_TIMESTAMP,
-    id            uuid
+    created_at    timestamp default CURRENT_TIMESTAMP
+
 );
 
 alter table users_refresh_token
-    owner to oboznyi;
+    owner to golang;
+
+create sequence categories_id_seq as integer;
+alter categories_id_seq owner to golang;
 
 create table products_categories
 (
@@ -70,7 +74,9 @@ create table products_categories
 );
 
 alter table products_categories
-    owner to oboznyi;
+    owner to golang;
+
+alter sequence categories_id_seq owned by products_categories.id;
 
 create unique index categories_id_uindex
     on products_categories (id);
@@ -89,7 +95,7 @@ create table products
 );
 
 alter table products
-    owner to oboznyi;
+    owner to golang;
 
 create unique index products_id_uindex
     on products (id);
@@ -105,7 +111,7 @@ create table suppliers
 );
 
 alter table suppliers
-    owner to oboznyi;
+    owner to golang;
 
 create unique index suppliers_id_uindex
     on suppliers (id);
@@ -129,7 +135,7 @@ create table products_suppliers
 );
 
 alter table products_suppliers
-    owner to oboznyi;
+    owner to golang;
 
 create table orders
 (
@@ -142,14 +148,14 @@ create table orders
     total_price      double precision                                    not null,
     status           char(20)         default 'empty'::character varying not null,
     payment_method   char(20),
-    created_at       timestamp        default CURRENT_TIMESTAMP          not null,
-    updated_at       timestamp        default CURRENT_TIMESTAMP          not null,
     discount_amount  double precision default 0,
-    discount_percent integer          default 0
+    discount_percent integer          default 0,
+    created_at       timestamp        default CURRENT_TIMESTAMP          not null,
+    updated_at       timestamp        default CURRENT_TIMESTAMP          not null
 );
 
 alter table orders
-    owner to oboznyi;
+    owner to golang;
 
 create unique index orders_id_uindex
     on orders (id);
@@ -170,5 +176,5 @@ create table orders_products
 );
 
 alter table orders_products
-    owner to oboznyi;
+    owner to golang;
 

@@ -1,11 +1,11 @@
 package repositories
 
 import (
-	"app/internal/models"
 	"database/sql"
 	"errors"
 	"github.com/google/uuid"
 	"log"
+	"online-shop/internal/models"
 )
 
 type UserRepo struct {
@@ -19,7 +19,7 @@ func NewUserRepo(db *sql.DB) *UserRepo {
 
 func (r *UserRepo) GetUserByID(ID uuid.UUID) (*models.User, error) {
 	var user models.User
-	err := r.DB.QueryRow("SELECT id, login, email, password_hash created_at, updated_at FROM users WHERE id=($1)", ID).Scan(user.ID, user.Login, user.Email, user.PasswordHash, user.CreatedAt, user.UpdatedAt)
+	err := r.DB.QueryRow("SELECT id, login, email, password_hash, created_at, updated_at FROM users WHERE id=($1)", ID).Scan(user.ID, user.Login, user.Email, user.PasswordHash, user.CreatedAt, user.UpdatedAt)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -29,7 +29,7 @@ func (r *UserRepo) GetUserByID(ID uuid.UUID) (*models.User, error) {
 
 func (r *UserRepo) GetUserByLogin(login string) (*models.User, error) {
 	var user models.User
-	err := r.DB.QueryRow("SELECT id, login, email, password_hash created_at, updated_at FROM users WHERE id=($1)", login).Scan(user.ID, user.Login, user.Email, user.PasswordHash, user.CreatedAt, user.UpdatedAt)
+	err := r.DB.QueryRow("SELECT id, login, email, password_hash, created_at, updated_at FROM users WHERE id=($1)", login).Scan(user.ID, user.Login, user.Email, user.PasswordHash, user.CreatedAt, user.UpdatedAt)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -39,7 +39,7 @@ func (r *UserRepo) GetUserByLogin(login string) (*models.User, error) {
 
 func (r *UserRepo) GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
-	err := r.DB.QueryRow("SELECT id, login, email, password_hash created_at, updated_at FROM users WHERE id=($1)", email).Scan(user.ID, user.Login, user.Email, user.PasswordHash, user.CreatedAt, user.UpdatedAt)
+	err := r.DB.QueryRow("SELECT id, login, email, password_hash, created_at, updated_at FROM users WHERE id=($1)", email).Scan(user.ID, user.Login, user.Email, user.PasswordHash, user.CreatedAt, user.UpdatedAt)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -49,7 +49,7 @@ func (r *UserRepo) GetUserByEmail(email string) (*models.User, error) {
 
 func (r *UserRepo) CreateUser(user *models.User) (uuid.UUID, error) {
 	if user == nil {
-		return uuid.Nil, errors.New("user data is empty")
+		return uuid.Nil, errors.New("user reg data is empty")
 	}
 	userUIID, err := user.ID.MarshalBinary()
 	if err != nil {
@@ -60,7 +60,7 @@ func (r *UserRepo) CreateUser(user *models.User) (uuid.UUID, error) {
 		if err != nil {
 			return uuid.Nil, err
 		}
-		_, err = prepare.Exec(userUIID, user.Login, user.Email, user.PasswordHash)
+		err = prepare.QueryRow(userUIID, user.Login, user.Email, user.PasswordHash).Scan()
 		if err != nil {
 			return uuid.Nil, err
 		}

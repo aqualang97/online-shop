@@ -1,9 +1,9 @@
 package repositories
 
 import (
-	"app/internal/models"
 	"database/sql"
 	"github.com/google/uuid"
+	"online-shop/internal/models"
 )
 
 type UserDataRepo struct {
@@ -17,13 +17,23 @@ func NewUserDataRepo(db *sql.DB) *UserDataRepo {
 
 func (r *UserDataRepo) CreateUserDate(data *models.UserData) (uuid.UUID, error) {
 	if data == nil {
-		
+
 	}
 	userUIID, err := data.UserID.MarshalBinary()
 	if err != nil {
 		return uuid.Nil, err
 	}
-
+	if r.TX != nil {
+		prepare, err := r.TX.Prepare("INSERT INTO users_data(user_id, full_name, date_of_birth, number, address, discount_percent, discount_amount) VALUES ($1,$2,$3,$4,$5,$6,$7)")
+		if err != nil {
+			return uuid.Nil, err
+		}
+		_, err = prepare.Exec(userUIID, data.FullName, data.DateOfBirth, data.Number, data.Address, data.DiscountPercent, data.DiscountAmount)
+		if err != nil {
+			return uuid.Nil, err
+		}
+		return data.UserID, nil
+	}
 	return data.UserID, nil
 }
 func (r *UserDataRepo) UpdateUserDate() {
