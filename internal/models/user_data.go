@@ -1,13 +1,12 @@
 package models
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
 type UserData struct {
-	UserID   uuid.UUID `json:"userID"`
-	FullName string    `json:"fullName"`
+	UserID   int    `json:"userID"`
+	FullName string `json:"fullName"`
 	//to change
 	DateOfBirth     string     `json:"dateOfBirth"`
 	Number          string     `json:"number"`

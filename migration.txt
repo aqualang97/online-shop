@@ -1,6 +1,6 @@
 create table users
 (
-    id            uuid                                not null
+    id            serial
         constraint users_pk
             primary key,
     login         text                                not null,
@@ -18,7 +18,7 @@ create unique index users_id_uindex
 
 create table users_data
 (
-    user_id          uuid
+    user_id          integer                                    not null
         constraint user_data_users_id_fk
             references users,
     full_name        text                                       not null,
@@ -36,8 +36,8 @@ alter table users_data
 
 create table users_access_token
 (
-    id           uuid                                not null,
-    user_id      uuid                                not null
+    id           serial,
+    user_id      integer                             not null
         constraint users_access_token_users_id_fk
             references users,
     access_token text                                not null,
@@ -49,20 +49,16 @@ alter table users_access_token
 
 create table users_refresh_token
 (
-    id            uuid,
-    user_id       uuid not null
+    id            serial,
+    user_id       integer not null
         constraint users_refresh_token_users_id_fk
             references users,
-    refresh_token text not null,
+    refresh_token text    not null,
     created_at    timestamp default CURRENT_TIMESTAMP
-
 );
 
 alter table users_refresh_token
     owner to golang;
-
-create sequence categories_id_seq as integer;
-alter categories_id_seq owner to golang;
 
 create table products_categories
 (
@@ -75,8 +71,6 @@ create table products_categories
 
 alter table products_categories
     owner to golang;
-
-alter sequence categories_id_seq owned by products_categories.id;
 
 create unique index categories_id_uindex
     on products_categories (id);
@@ -139,10 +133,10 @@ alter table products_suppliers
 
 create table orders
 (
-    id               uuid                                                not null
+    id               serial
         constraint orders_pk
             primary key,
-    user_id          uuid                                                not null
+    user_id          integer                                             not null
         constraint orders_users_id_fk
             references users,
     total_price      double precision                                    not null,
@@ -162,11 +156,11 @@ create unique index orders_id_uindex
 
 create table orders_products
 (
-    id                  uuid                                not null,
+    id                  serial,
     product_id          integer                             not null
         constraint orders_products_products_id_fk
             references products,
-    order_id            uuid                                not null
+    order_id            integer                             not null
         constraint orders_products_orders_id_fk
             references orders,
     numbers_of_products integer,
@@ -178,3 +172,15 @@ create table orders_products
 alter table orders_products
     owner to golang;
 
+CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_timestamp();
