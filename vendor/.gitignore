@@ -1,0 +1,8 @@
+.env
+.idea
+/config/cors.env
+/config/postgres.env
+/config/token.env
+
+/vendor/
+.DS_Store

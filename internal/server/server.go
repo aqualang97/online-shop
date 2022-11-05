@@ -2,7 +2,6 @@ package server
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -37,7 +36,6 @@ func (s *Server) Start() {
 
 		router.Router(service, s.cfg, routerShop)
 
-		fmt.Println("123")
 		err := http.ListenAndServe("localhost:8000", routerShop)
 		if err != nil {
 			log.Fatal(err)
@@ -51,7 +49,6 @@ func (s *Server) Start() {
 
 		router.Router(service, s.cfg, routerAdmin)
 
-		fmt.Println("123")
 		err := http.ListenAndServe("localhost:8080", routerAdmin)
 		if err != nil {
 			log.Fatal(err)
