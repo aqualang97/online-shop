@@ -1,38 +1,28 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"log"
-	"os"
+	"online-shop/config"
+	"online-shop/internal/server"
+	"online-shop/internal/store/database_open"
 )
 
 func main() {
-	err := godotenv.Load()
+	db, err := database_open.Open()
 	if err != nil {
-		log.Fatal("Error loading .env file\n", err)
-	}
-	host := os.Getenv("HOST")
-	port := os.Getenv("PORT")
-	user := os.Getenv("USER")
-	password := os.Getenv("PASSWORD")
-	dbname := os.Getenv("DBNAME")
-
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer db.Close()
-	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
+
+	cfg := config.NewConfig()
+	s := server.NewServer(cfg, db)
+
+	s.Start()
 	fmt.Println("Successfully connected!")
-	//ud := repositories.NewUserDataRepo(db)
-	//u := repositories.NewUserRepo(db)
+
+	//ud := repositories.NewUserDataRepo(database_open)
+	//u := repositories.NewUserRepo(database_open)
 
 }

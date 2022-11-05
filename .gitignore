@@ -1,3 +1,7 @@
 .env
 .idea
 vendor
+/config/cors.env
+/config/postgres.env
+/config/token.env
+
