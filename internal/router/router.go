@@ -8,5 +8,6 @@ import (
 
 func Router(services *services.Manager, cfg *config.Config, r *gin.Engine) {
 	//mw := middleware.NewMiddleware(service)
-	return
+	//ctr := controller.NewController(services, cfg)
+
 }
