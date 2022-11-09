@@ -1,12 +1,13 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"time"
 )
 
 type Order struct {
-	ID              int        `json:"ID"`
-	UserID          int        `json:"userID"`
+	ID              uuid.UUID  `json:"ID"`
+	UserID          uuid.UUID  `json:"userID"`
 	TotalPrice      float32    `json:"totalPrice"`
 	Status          string     `json:"status"`
 	PaymentMethod   string     `json:"paymentMethod"`

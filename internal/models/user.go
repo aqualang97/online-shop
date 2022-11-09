@@ -1,13 +1,14 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
 	"time"
 )
 
 type User struct {
-	ID           int        `json:"ID"`
+	ID           uuid.UUID  `json:"ID"`
 	Login        string     `json:"login"`
 	Email        string     `json:"email"`
 	PasswordHash string     `json:"passwordHash"`
@@ -15,14 +16,38 @@ type User struct {
 	UpdatedAt    *time.Time `json:"updatedAt"`
 }
 
-func CreateUserByRegData(login, email, password string) (*User, error) {
-	passwordHashByte, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+type UserRegistrationRequest struct {
+	Login    string `json:"login"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type UserLoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type UpdateUserRequest struct {
+	ID       uuid.UUID
+	Login    string `json:"login"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func CreateUserByRegData(urr *UserRegistrationRequest) (*User, error) {
+
+	userID, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
+	passwordHashByte, err := bcrypt.GenerateFromPassword([]byte(urr.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 	return &User{
-		Login:        login,
-		Email:        email,
+		ID:           userID,
+		Login:        urr.Login,
+		Email:        urr.Email,
 		PasswordHash: string(passwordHashByte),
 	}, nil
 }

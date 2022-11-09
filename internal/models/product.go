@@ -1,10 +1,13 @@
 package models
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type Product struct {
-	ID                 int        `json:"ID"`
-	SupplierID         int        `json:"supplierID"`
+	ID                 uuid.UUID  `json:"ID"`
+	SupplierID         uuid.UUID  `json:"supplierID"`
 	ExternalProductID  int        `json:"externalProductID"`
 	ExternalSupplierID int        `json:"externalSupplierID"`
 	Name               string     `json:"name"`

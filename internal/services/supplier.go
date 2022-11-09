@@ -6,8 +6,8 @@ type SupplierWebService struct {
 	store *store.Store
 }
 
-func NewSupplierWebService(store *store.Store) *UsersWebService {
-	return &UsersWebService{
+func NewSupplierWebService(store *store.Store) *SupplierWebService {
+	return &SupplierWebService{
 		store: store,
 	}
 }

@@ -47,7 +47,7 @@ func (s *Server) Start() {
 		//Run images server
 		routerAdmin := gin.Default()
 
-		router.Router(service, s.cfg, routerAdmin)
+		//router.Router(service, s.cfg, routerAdmin)
 
 		err := http.ListenAndServe("localhost:8080", routerAdmin)
 		if err != nil {

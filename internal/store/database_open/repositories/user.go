@@ -3,6 +3,8 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"github.com/google/uuid"
 	"log"
 	"online-shop/internal/models"
 )
@@ -50,56 +52,65 @@ func (r *UserRepo) GetUserByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
-func (r *UserRepo) CreateUser(user *models.User) (int, error) {
+func (r *UserRepo) CreateUser(user *models.User) (uuid.UUID, error) {
 	if user == nil {
-		return 0, errors.New("user reg data is empty")
+		return uuid.Nil, errors.New("user reg data is empty")
+	}
+	if user == nil {
+		return uuid.Nil, errors.New("no user provided")
+	}
+	uid, err := user.ID.MarshalBinary()
+	if err != nil {
+		return uuid.Nil, err
 	}
 	if r.TX != nil {
-		prepare, err := r.TX.Prepare("INSERT INTO users( login, email, password_hash) VALUES ($1,$2,$3) RETURNING id")
+		prepare, err := r.TX.Prepare("INSERT INTO users(id, login, email, password_hash) VALUES ($1,$2,$3,$4)")
 		if err != nil {
-			return 0, err
+			return uuid.Nil, err
 		}
-		err = prepare.QueryRow(user.Login, user.Email, user.PasswordHash).Scan(&user.ID)
+		_, err = prepare.Exec(uid, user.Login, user.Email, user.PasswordHash)
+		fmt.Println(err)
 		if err != nil {
-			return 0, err
+			return uuid.Nil, err
 		}
 		return user.ID, nil
 	}
-	prepare, err := r.DB.Prepare("INSERT INTO users( login, email, password_hash) VALUES ($1,$2,$3) RETURNING id")
+	prepare, err := r.DB.Prepare("INSERT INTO users(id, login, email, password_hash) VALUES ($1,$2,$3, $4)")
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 
 	}
-	err = prepare.QueryRow(user.Login, user.Email, user.PasswordHash).Scan(&user.ID)
+	_, err = prepare.Exec(uid, user.Login, user.Email, user.PasswordHash)
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
 	return user.ID, nil
 }
 
-func (r *UserRepo) UpdateUser(user *models.User) (int, error) {
+func (r *UserRepo) UpdateUser(user *models.User) (uuid.UUID, error) {
 	if user == nil {
-		return 0, errors.New("user data is empty")
+		return uuid.Nil, errors.New("user data is empty")
 	}
+	uid, err := user.ID.MarshalBinary()
 
 	if r.TX != nil {
 		prepare, err := r.TX.Prepare("UPDATE users SET login=$2, email=$3, password_hash=$4 WHERE id=$1")
 		if err != nil {
-			return 0, err
+			return uuid.Nil, err
 		}
-		_, err = prepare.Exec(user.ID, user.Login, user.Email, user.PasswordHash)
+		_, err = prepare.Exec(uid, user.Login, user.Email, user.PasswordHash)
 		if err != nil {
-			return 0, err
+			return uuid.Nil, err
 		}
 		return user.ID, nil
 	}
 	prepare, err := r.TX.Prepare("UPDATE users SET login=$2, email=$3, password_hash=$4 WHERE id=$1")
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
-	_, err = prepare.Exec(user.ID, user.Login, user.Email, user.PasswordHash)
+	_, err = prepare.Exec(uid, user.Login, user.Email, user.PasswordHash)
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
 	return user.ID, nil
 }

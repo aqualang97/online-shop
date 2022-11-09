@@ -1,11 +1,12 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"time"
 )
 
 type Supplier struct {
-	ID                 int
+	ID                 uuid.UUID
 	ExternalSupplierID int
 	Image              string
 	Description        string

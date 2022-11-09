@@ -51,7 +51,7 @@ func (p *ProductRepo) CreateProduct(product *models.Product) (*models.Product, e
 		return nil, errors.New("incorrect product")
 	}
 	if p.TX != nil {
-		prepare, err := p.TX.Prepare("INSERT INTO products(product_name, external_product_id, product_category)" +
+		prepare, err := p.TX.Prepare("INSERT INTO products(product_name, external_product_id, category_id)" +
 			"VALUES ($1, $2, (SELECT pc.id FROM products_categories AS pc WHERE pc.category_name=$3))")
 		if err != nil {
 			return nil, err
@@ -63,7 +63,7 @@ func (p *ProductRepo) CreateProduct(product *models.Product) (*models.Product, e
 
 		return product, err
 	}
-	prepare, err := p.DB.Prepare("INSERT INTO products(product_name, external_product_id, product_category)" +
+	prepare, err := p.DB.Prepare("INSERT INTO products(product_name, external_product_id, category_id)" +
 		"VALUES ($1, $2, (SELECT pc.id FROM products_categories AS pc WHERE pc.category_name=$3)) RETURNING id")
 	if err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func (p *ProductRepo) GetProductInfo(id int) (*models.Product, error) {
 	if p.TX != nil {
 		prepare, err := p.TX.Prepare("SELECT SELECT p.id, p.product_name, pc.category_name, " +
 			"s.external_product_id, s.external_supplier_id, s.price, s.image, s.description, s.quantity " +
-			"FROM products as p LEFT JOIN products_categories pc on pc.id = p.product_category " +
+			"FROM products as p LEFT JOIN products_categories pc on pc.id = p.category_id " +
 			"LEFT JOIN products_suppliers s s.product_id=$1")
 		if err != nil {
 			return nil, err
@@ -130,7 +130,7 @@ func (p *ProductRepo) GetProductInfo(id int) (*models.Product, error) {
 	}
 	prepare, err := p.DB.Prepare("SELECT SELECT p.id, p.product_name, pc.category_name, " +
 		"s.external_product_id, s.external_supplier_id, s.price, s.image, s.description, s.quantity " +
-		"FROM products as p LEFT JOIN products_categories pc on pc.id = p.product_category " +
+		"FROM products as p LEFT JOIN products_categories pc on pc.id = p.category_id " +
 		"LEFT JOIN products_suppliers s on s.product_id=$1")
 	if err != nil {
 		return nil, err
@@ -150,7 +150,7 @@ func (p *ProductRepo) GetAllProducts() (*[]models.Product, error) {
 	if p.TX != nil {
 		rows, err := p.TX.Query("SELECT SELECT p.id, p.product_name, pc.category_name, " +
 			"s.external_product_id, s.external_supplier_id, s.price, s.image, s.description, s.quantity " +
-			"FROM products as p LEFT JOIN products_categories pc on pc.id = p.product_category " +
+			"FROM products as p LEFT JOIN products_categories pc on pc.id = p.category_id " +
 			"LEFT JOIN products_suppliers s on p.id = s.product_id")
 		if err != nil {
 			return nil, err
@@ -172,7 +172,7 @@ func (p *ProductRepo) GetAllProducts() (*[]models.Product, error) {
 	}
 	rows, err := p.DB.Query("SELECT SELECT p.id, p.product_name, pc.category_name, " +
 		"s.external_product_id, s.external_supplier_id, s.price, s.image, s.description, s.quantity " +
-		"FROM products as p LEFT JOIN products_categories pc on pc.id = p.product_category " +
+		"FROM products as p LEFT JOIN products_categories pc on pc.id = p.category_id " +
 		"LEFT JOIN products_suppliers s on p.id = s.product_id")
 	if err != nil {
 		return nil, err

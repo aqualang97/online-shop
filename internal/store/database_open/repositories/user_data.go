@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"github.com/google/uuid"
 	"online-shop/internal/models"
 )
 
@@ -15,32 +16,32 @@ func NewUserDataRepo(db *sql.DB) *UserDataRepo {
 	return &UserDataRepo{DB: db}
 }
 
-func (r *UserDataRepo) CreateUserDate(data *models.UserData) (int, error) {
+func (r *UserDataRepo) CreateUserDate(data *models.UserData) (uuid.UUID, error) {
 	if data == nil {
-		return 0, errors.New("user data is empty")
+		return uuid.Nil, errors.New("user data is empty")
 	}
-	//userUIID, err := data.UserID.MarshalBinary()
-	//if err != nil {
-	//	return uuid.Nil, err
-	//}
+	userUIID, err := data.UserID.MarshalBinary()
+	if err != nil {
+		return uuid.Nil, err
+	}
 	if r.TX != nil {
 		prepare, err := r.TX.Prepare("INSERT INTO users_data(user_id, full_name, date_of_birth, number, address, discount_percent, discount_amount) VALUES ($1,$2,$3,$4,$5,$6,$7)")
 		if err != nil {
-			return 0, err
+			return uuid.Nil, err
 		}
-		_, err = prepare.Exec(data.UserID, data.FullName, data.DateOfBirth, data.Number, data.Address, data.DiscountPercent, data.DiscountAmount)
+		_, err = prepare.Exec(userUIID, data.FullName, data.DateOfBirth, data.Number, data.Address, data.DiscountPercent, data.DiscountAmount)
 		if err != nil {
-			return 0, err
+			return uuid.Nil, err
 		}
 		return data.UserID, nil
 	}
 	prepare, err := r.DB.Prepare("INSERT INTO users_data(user_id, full_name, date_of_birth, number, address, discount_percent, discount_amount) VALUES ($1,$2,$3,$4,$5,$6,$7)")
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
-	_, err = prepare.Exec(data.UserID, data.FullName, data.DateOfBirth, data.Number, data.Address, data.DiscountPercent, data.DiscountAmount)
+	_, err = prepare.Exec(userUIID, data.FullName, data.DateOfBirth, data.Number, data.Address, data.DiscountPercent, data.DiscountAmount)
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
 	return data.UserID, nil
 }
