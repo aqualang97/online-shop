@@ -51,16 +51,16 @@ func (r *UserDataRepo) UpdateUserDate(data *models.UserData) (*models.UserData, 
 	if data == nil {
 		return nil, errors.New("user data is empty")
 	}
-	//userUIID, err := data.UserID.MarshalBinary()
-	//if err != nil {
-	//	return nil, err
-	//}
+	userUIID, err := data.UserID.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
 	if r.TX != nil {
 		prepare, err := r.TX.Prepare("UPDATE users_data SET (full_name=$2, date_of_birth=$3, number=$4, address=$5) WHERE user_id=$1")
 		if err != nil {
 			return nil, err
 		}
-		_, err = prepare.Exec(data.UserID, data.FullName, data.DateOfBirth, data.Number, data.Address)
+		_, err = prepare.Exec(userUIID, data.FullName, data.DateOfBirth, data.Number, data.Address)
 		if err != nil {
 			return nil, err
 		}
@@ -71,7 +71,7 @@ func (r *UserDataRepo) UpdateUserDate(data *models.UserData) (*models.UserData, 
 	if err != nil {
 		return nil, err
 	}
-	_, err = prepare.Exec(data.UserID, data.FullName, data.DateOfBirth, data.Number, data.Address)
+	_, err = prepare.Exec(userUIID, data.FullName, data.DateOfBirth, data.Number, data.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -79,15 +79,19 @@ func (r *UserDataRepo) UpdateUserDate(data *models.UserData) (*models.UserData, 
 	return data, nil
 }
 
-func (r *UserDataRepo) DeleteUserDate(userID int) error {
+func (r *UserDataRepo) DeleteUserDate(userID uuid.UUID) error {
+	userUIID, err := userID.MarshalBinary()
+	if err != nil {
+		return err
+	}
 	if r.TX != nil {
-		_, err := r.TX.Exec("DELETE FROM users_data WHERE user_id=$1", userID)
+		_, err := r.TX.Exec("DELETE FROM users_data WHERE user_id=$1", userUIID)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	_, err := r.TX.Exec("DELETE FROM users_data WHERE user_id=$1", userID)
+	_, err = r.TX.Exec("DELETE FROM users_data WHERE user_id=$1", userUIID)
 	if err != nil {
 		return err
 	}
@@ -96,12 +100,16 @@ func (r *UserDataRepo) DeleteUserDate(userID int) error {
 
 func (r *UserDataRepo) AddDiscountAmount(discount float32, data *models.UserData) error {
 	// Cashback
+	userUIID, err := data.UserID.MarshalBinary()
+	if err != nil {
+		return err
+	}
 	if r.TX != nil {
 		prepare, err := r.TX.Prepare("UPDATE users_data SET discount_amount=discount_amount+$2 WHERE user_id=$1")
 		if err != nil {
 			return err
 		}
-		_, err = prepare.Exec(data.UserID, discount)
+		_, err = prepare.Exec(userUIID, discount)
 		if err != nil {
 			return err
 		}
@@ -112,7 +120,7 @@ func (r *UserDataRepo) AddDiscountAmount(discount float32, data *models.UserData
 	if err != nil {
 		return err
 	}
-	_, err = prepare.Exec(data.UserID, discount)
+	_, err = prepare.Exec(userUIID, discount)
 	if err != nil {
 		return err
 	}
@@ -120,13 +128,16 @@ func (r *UserDataRepo) AddDiscountAmount(discount float32, data *models.UserData
 	return nil
 }
 func (r *UserDataRepo) UpdateDiscountPercent(discountPercent int, data *models.UserData) error {
-
+	userUIID, err := data.UserID.MarshalBinary()
+	if err != nil {
+		return err
+	}
 	if r.TX != nil {
 		prepare, err := r.TX.Prepare("UPDATE users_data SET discount_percent=discount_percent+$2 WHERE user_id=$1")
 		if err != nil {
 			return err
 		}
-		_, err = prepare.Exec(data.UserID, discountPercent)
+		_, err = prepare.Exec(userUIID, discountPercent)
 		if err != nil {
 			return err
 		}
@@ -137,7 +148,7 @@ func (r *UserDataRepo) UpdateDiscountPercent(discountPercent int, data *models.U
 	if err != nil {
 		return err
 	}
-	_, err = prepare.Exec(data.UserID, discountPercent)
+	_, err = prepare.Exec(userUIID, discountPercent)
 	if err != nil {
 		return err
 	}

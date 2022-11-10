@@ -18,10 +18,14 @@ func NewUserRepo(db *sql.DB) *UserRepo {
 	return &UserRepo{DB: db}
 }
 
-func (r *UserRepo) GetUserByID(ID int) (*models.User, error) {
+func (r *UserRepo) GetUserByID(ID uuid.UUID) (*models.User, error) {
 	var user models.User
-	err := r.DB.QueryRow("SELECT id, login, email, password_hash, created_at, updated_at FROM users WHERE id=$1",
-		ID).Scan(
+	userUUid, err := ID.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	err = r.DB.QueryRow("SELECT id, login, email, password_hash, created_at, updated_at FROM users WHERE id=$1",
+		userUUid).Scan(
 		&user.ID, &user.Login, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		log.Println(err)
@@ -32,8 +36,8 @@ func (r *UserRepo) GetUserByID(ID int) (*models.User, error) {
 
 func (r *UserRepo) GetUserByLogin(login string) (*models.User, error) {
 	var user models.User
-	err := r.DB.QueryRow("SELECT id, login, email, password_hash, created_at, updated_at FROM users WHERE id=($1)"+
-		"", login).Scan(&user.ID, &user.Login, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt)
+	err := r.DB.QueryRow("SELECT id, login, email, password_hash, created_at, updated_at FROM users WHERE login=($1)",
+		login).Scan(&user.ID, &user.Login, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -43,8 +47,8 @@ func (r *UserRepo) GetUserByLogin(login string) (*models.User, error) {
 
 func (r *UserRepo) GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
-	err := r.DB.QueryRow("SELECT id, login, email, password_hash, created_at, updated_at FROM users WHERE id=($1)"+
-		"", email).Scan(&user.ID, &user.Login, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt)
+	err := r.DB.QueryRow("SELECT id, login, email, password_hash, created_at, updated_at FROM users WHERE email=($1)",
+		email).Scan(&user.ID, &user.Login, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -56,9 +60,7 @@ func (r *UserRepo) CreateUser(user *models.User) (uuid.UUID, error) {
 	if user == nil {
 		return uuid.Nil, errors.New("user reg data is empty")
 	}
-	if user == nil {
-		return uuid.Nil, errors.New("no user provided")
-	}
+
 	uid, err := user.ID.MarshalBinary()
 	if err != nil {
 		return uuid.Nil, err
@@ -92,6 +94,9 @@ func (r *UserRepo) UpdateUser(user *models.User) (uuid.UUID, error) {
 		return uuid.Nil, errors.New("user data is empty")
 	}
 	uid, err := user.ID.MarshalBinary()
+	if err != nil {
+		return uuid.Nil, err
+	}
 
 	if r.TX != nil {
 		prepare, err := r.TX.Prepare("UPDATE users SET login=$2, email=$3, password_hash=$4 WHERE id=$1")
@@ -114,20 +119,26 @@ func (r *UserRepo) UpdateUser(user *models.User) (uuid.UUID, error) {
 	}
 	return user.ID, nil
 }
-func (r *UserRepo) DeleteUser(id int) (int, error) {
-	if r.TX != nil {
-		_, err := r.TX.Exec("DELETE FROM users WHERE id=$1", id)
-		if err != nil {
-			return 0, err
-		}
-		return id, err
-	}
-	_, err := r.TX.Exec("DELETE FROM users WHERE id=$1", id)
+func (r *UserRepo) DeleteUser(id uuid.UUID) error {
+	uid, err := id.MarshalBinary()
 	if err != nil {
-		return 0, err
+		return err
 	}
-	return id, err
+
+	if r.TX != nil {
+		_, err = r.TX.Exec("DELETE FROM users WHERE id=$1", uid)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	_, err = r.TX.Exec("DELETE FROM users WHERE id=$1", uid)
+	if err != nil {
+		return err
+	}
+	return nil
 }
+
 func (r *UserRepo) BeginTX() error {
 	tx, err := r.DB.Begin()
 	if err != nil {

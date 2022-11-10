@@ -54,3 +54,15 @@ func (u *UsersWebService) GetUserByEmail(email string) (*models.User, error) {
 	return user, nil
 
 }
+
+func (u *UsersWebService) GetUserByLogin(login string) (*models.User, error) {
+	user, err := u.store.Users.GetUserByLogin(login)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+	return user, nil
+
+}

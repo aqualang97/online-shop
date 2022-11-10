@@ -32,11 +32,11 @@ func (s *Server) Start() {
 	wg.Add(2)
 	go func() {
 		// Run Online-shop
-		routerShop := gin.Default()
+		routerUser := gin.Default()
 
-		router.Router(service, s.cfg, routerShop)
+		router.UserRouter(service, s.cfg, routerUser)
 
-		err := http.ListenAndServe("localhost:8000", routerShop)
+		err := http.ListenAndServe("localhost:8000", routerUser)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -46,6 +46,7 @@ func (s *Server) Start() {
 	go func() {
 		//Run images server
 		routerAdmin := gin.Default()
+		router.AdminRouter(service, s.cfg, routerAdmin)
 
 		//router.Router(service, s.cfg, routerAdmin)
 

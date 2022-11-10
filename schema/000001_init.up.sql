@@ -4,6 +4,7 @@ CREATE TABLE users
     login         varchar(255)          not null unique,
     email         varchar(255)          not null unique,
     password_hash text                                not null,
+    role          varchar(5) default 'user'           not null,
     created_at    timestamp default CURRENT_TIMESTAMP not null,
     updated_at    timestamp default CURRENT_TIMESTAMP not null
 );
@@ -27,7 +28,8 @@ CREATE TABLE users_tokens
     user_id      bytea  references users (id)  on delete cascade,
     access_hash  varchar(255)                        not null,
     refresh_hash varchar(255)                        not null,
-    created_at   timestamp default CURRENT_TIMESTAMP not null
+    created_at   timestamp default CURRENT_TIMESTAMP not null,
+    updated_at   timestamp default CURRENT_TIMESTAMP not null
 );
 CREATE TABLE suppliers
 (

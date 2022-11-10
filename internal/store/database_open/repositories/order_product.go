@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"online-shop/internal/models"
 )
 
@@ -16,18 +17,27 @@ func NewOrderProductRepo(db *sql.DB) *OrderProductRepo {
 	return &OrderProductRepo{DB: db}
 }
 
-func (o *OrderProductRepo) AddProduct(productID, orderID, numbers int) error {
-	if productID <= 0 || orderID <= 0 || numbers <= 0 {
+// Переделать!!!!
+func (o *OrderProductRepo) AddProduct(productID, orderID uuid.UUID, numbers int) error {
+	if productID == uuid.Nil || orderID == uuid.Nil || numbers <= 0 {
 		return errors.New("invalid arg(s)")
 	}
 	var inStock int
-
+	pid, err := productID.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	oid, err := orderID.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	var price float32
 	if o.TX != nil {
-		prepare, err := o.TX.Prepare("select quantity from products_suppliers where product_id=$1")
+		prepare, err := o.TX.Prepare("select quantity, price from products_suppliers where product_id=$1")
 		if err != nil {
 			return err
 		}
-		err = prepare.QueryRow(productID).Scan(&inStock)
+		err = prepare.QueryRow(pid).Scan(&inStock, &price)
 		if err != nil {
 			return err
 		}
@@ -36,18 +46,18 @@ func (o *OrderProductRepo) AddProduct(productID, orderID, numbers int) error {
 			return errors.New(str)
 		}
 		_, err = o.TX.Exec(
-			"INSERT INTO orders_products(product_id, order_id, numbers_of_products, purchase_price) " +
-				"VALUES ($1,$2,$3, (SELECT price FROM products_suppliers WHERE product_id=$1))")
+			"INSERT INTO orders_products(product_id, order_id, numbers_of_products, purchase_price) "+
+				"VALUES ($1,$2,$3,$4 (SELECT price FROM products_suppliers WHERE product_id=$1))", pid, oid, numbers, float32(numbers)*price)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	prepare, err := o.DB.Prepare("select quantity from products_suppliers where product_id=$1")
+	prepare, err := o.DB.Prepare("select quantity, price from products_suppliers where product_id=$1")
 	if err != nil {
 		return err
 	}
-	err = prepare.QueryRow(productID).Scan(&inStock)
+	err = prepare.QueryRow(pid).Scan(&inStock, &price)
 	if err != nil {
 		return err
 	}
@@ -56,27 +66,36 @@ func (o *OrderProductRepo) AddProduct(productID, orderID, numbers int) error {
 		return errors.New(str)
 	}
 	_, err = o.DB.Exec(
-		"INSERT INTO orders_products(product_id, order_id, numbers_of_products, purchase_price) " +
-			"VALUES ($1,$2,$3, (SELECT price FROM products_suppliers WHERE product_id=$1))")
+		"INSERT INTO orders_products(product_id, order_id, numbers_of_products, purchase_price) "+
+			"VALUES ($1,$2,$3, (SELECT price FROM products_suppliers WHERE product_id=$1))", pid, oid, numbers, float32(numbers)*price)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (o *OrderProductRepo) UpdateProduct(productID, orderID, numbers int) error {
-	if productID <= 0 || orderID <= 0 || numbers <= 0 {
+func (o *OrderProductRepo) UpdateProduct(productID, orderID uuid.UUID, numbers int) error {
+	if productID == uuid.Nil || orderID == uuid.Nil || numbers <= 0 {
 		return errors.New("invalid arg(s)")
 	}
 	var inStock, inOrder int
+	pid, err := productID.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	oid, err := orderID.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	//var price float32
 
 	if o.TX != nil {
-		prepare, err := o.TX.Prepare("select ps.quantity, op.numbers_of_products from products_suppliers as ps " +
+		prepare, err := o.TX.Prepare("select ps.quantity, op.numbers_of_products, ps.price from products_suppliers as ps " +
 			"left join orders_products op on ps.product_id = $1 and op.order_id=1")
 		if err != nil {
 			return err
 		}
-		err = prepare.QueryRow(productID, orderID).Scan(&inStock, &inOrder)
+		err = prepare.QueryRow(pid, oid).Scan(&inStock, &inOrder)
 		if err != nil {
 			return err
 		}

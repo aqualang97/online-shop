@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"github.com/google/uuid"
 	"online-shop/internal/models"
 )
 
@@ -15,46 +16,51 @@ func NewSupplierRepo(db *sql.DB) *SupplierRepo {
 	return &SupplierRepo{DB: db}
 }
 
-func (s *SupplierRepo) CreateSupplier(supp *models.Supplier) (int, error) {
+func (s *SupplierRepo) CreateSupplier(supp *models.Supplier) (uuid.UUID, error) {
 	if supp == nil {
-		return 0, errors.New("invalid data")
+		return uuid.Nil, errors.New("invalid data")
 	}
-	var id int
+	sid := uuid.New()
+	sidB, err := sid.MarshalBinary()
+	if err != nil {
+		return uuid.Nil, err
+	}
 	if s.TX != nil {
-		prepare, err := s.TX.Prepare("INSERT INTO suppliers(external_supplier_id, supplier_name, image, description) " +
-			"VALUES ($1,$2,$3,$4) RETURNING id")
+		prepare, err := s.TX.Prepare("INSERT INTO suppliers(id, external_supplier_id, supplier_name, image, description) " +
+			"VALUES ($1,$2,$3,$4,$5)")
 		if err != nil {
-			return 0, err
+			return uuid.Nil, err
 		}
-		err = prepare.QueryRow(supp.ExternalSupplierID, supp.SupplierName, supp.Image, supp.Description).Scan(id)
+		_, err = prepare.Exec(sidB, supp.ExternalSupplierID, supp.SupplierName, supp.Image, supp.Description)
 		if err != nil {
-			return 0, err
+			return uuid.Nil, err
 		}
-		return id, nil
+		return sid, nil
 	}
-	prepare, err := s.DB.Prepare("INSERT INTO suppliers(external_supplier_id, supplier_name, image, description) " +
-		"VALUES ($1,$2,$3,$4) RETURNING id")
+	prepare, err := s.DB.Prepare("INSERT INTO suppliers(id, external_supplier_id, supplier_name, image, description) " +
+		"VALUES ($1,$2,$3,$4, $5) RETURNING id")
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
-	err = prepare.QueryRow(supp.ExternalSupplierID, supp.SupplierName, supp.Image, supp.Description).Scan(id)
+	_, err = prepare.Exec(sidB, supp.ExternalSupplierID, supp.SupplierName, supp.Image, supp.Description)
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
-	return id, nil
+	return sid, nil
 }
 
 //todo
 //func (s *SupplierRepo) UpdateSupplier()  {}
 
-func (s *SupplierRepo) GetSupplier(id int) (*models.Supplier, error) {
+func (s *SupplierRepo) GetSupplier(id uuid.UUID) (*models.Supplier, error) {
 	var supp models.Supplier
+	sid, err := id.MarshalBinary()
 	if s.TX != nil {
 		prepare, err := s.TX.Prepare("SELECT id, external_supplier_id, supplier_name, image, description FROM suppliers WHERE id=$1")
 		if err != nil {
 			return nil, err
 		}
-		err = prepare.QueryRow(id).Scan(&supp.ID, &supp.ExternalSupplierID, &supp.SupplierName, &supp.Image, &supp.Description)
+		err = prepare.QueryRow(sid).Scan(&supp.ID, &supp.ExternalSupplierID, &supp.SupplierName, &supp.Image, &supp.Description)
 		if err != nil {
 			return nil, err
 		}
@@ -64,7 +70,7 @@ func (s *SupplierRepo) GetSupplier(id int) (*models.Supplier, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = prepare.QueryRow(id).Scan(&supp.ID, &supp.ExternalSupplierID, &supp.SupplierName, &supp.Image, &supp.Description)
+	err = prepare.QueryRow(sid).Scan(&supp.ID, &supp.ExternalSupplierID, &supp.SupplierName, &supp.Image, &supp.Description)
 	if err != nil {
 		return nil, err
 	}

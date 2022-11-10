@@ -6,6 +6,7 @@ import (
 )
 
 type Store struct {
+	Admin         *repositories.AdminRepo
 	Orders        *repositories.OrderRepo
 	OrderProducts *repositories.OrderProductRepo
 	Products      *repositories.ProductRepo
@@ -16,6 +17,7 @@ type Store struct {
 }
 
 func NewStore(db *sql.DB) *Store {
+	ar := repositories.NewAdminRepo(db)
 	or := repositories.NewOrderRepo(db)
 	opr := repositories.NewOrderProductRepo(db)
 	pr := repositories.NewProductRepo(db)
@@ -25,6 +27,7 @@ func NewStore(db *sql.DB) *Store {
 	udr := repositories.NewUserDataRepo(db)
 
 	return &Store{
+		Admin:         ar,
 		Orders:        or,
 		OrderProducts: opr,
 		Products:      pr,

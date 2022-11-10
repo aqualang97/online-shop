@@ -6,6 +6,7 @@ import (
 )
 
 type Manager struct {
+	Admin        AdminService
 	Order        OrderService
 	OrderProduct OrderProductService
 	Product      ProductService
@@ -20,6 +21,7 @@ func NewManager(store *store.Store) (*Manager, error) {
 		return nil, errors.New("no store provided")
 	}
 	return &Manager{
+		Admin:        NewAdminWebService(store),
 		Order:        NewOrderWebService(store),
 		OrderProduct: NewOrderProductWebService(store),
 		Product:      NewProductWebService(store),

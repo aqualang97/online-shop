@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"database/sql"
-	"errors"
 )
 
 type OrderRepo struct {
@@ -19,32 +18,35 @@ const awaitingPayment = "awaiting payment"
 const paid = "paid"
 const completed = "completed"
 
-func (o *OrderRepo) NewEmptyOrder(userID int) (int, error) {
-	if userID <= 0 {
-		return 0, errors.New("invalid user id")
-	}
-	var orderID int
-	if o.TX != nil {
-		prepare, err := o.TX.Prepare("INSERT INTO orders(user_id) VALUES ($1) RETURNING id")
-		if err != nil {
-			return 0, err
-		}
-		err = prepare.QueryRow(userID).Scan(&orderID)
-		if err != nil {
-			return 0, err
-		}
-		return orderID, nil
-	}
-	prepare, err := o.DB.Prepare("INSERT INTO orders(user_id) VALUES ($1) RETURNING id")
-	if err != nil {
-		return 0, err
-	}
-	err = prepare.QueryRow(userID).Scan(&orderID)
-	if err != nil {
-		return 0, err
-	}
-	return orderID, nil
-}
+//
+//func (o *OrderRepo) NewEmptyOrder(userID uuid.UUID) (uuid.UUID, error) {
+//	uid, err := userID.MarshalBinary()
+//	if err != nil {
+//		return uuid.Nil, err
+//	}
+//	var orderID uuid.UUID
+//	orderID = uuid.New()
+//	if o.TX != nil {
+//		prepare, err := o.TX.Prepare("INSERT INTO orders(user_id) VALUES ($1) RETURNING id")
+//		if err != nil {
+//			return 0, err
+//		}
+//		err = prepare.QueryRow(userID).Scan(&orderID)
+//		if err != nil {
+//			return 0, err
+//		}
+//		return orderID, nil
+//	}
+//	prepare, err := o.DB.Prepare("INSERT INTO orders(user_id) VALUES ($1) RETURNING id")
+//	if err != nil {
+//		return 0, err
+//	}
+//	err = prepare.QueryRow(userID).Scan(&orderID)
+//	if err != nil {
+//		return 0, err
+//	}
+//	return orderID, nil
+//}
 
 //todo
 //func (o *OrderRepo) SetStatus(orderID int, status string) (*models.Order, error) {

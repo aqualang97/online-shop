@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/google/uuid"
 	"online-shop/internal/models"
 	"online-shop/internal/store"
 )
@@ -23,7 +24,7 @@ func (t *TokenWebService) CreateToken(token *models.Token) error {
 	return nil
 }
 
-func (t *TokenWebService) GetTokenByUserID(userID int) (*models.Token, error) {
+func (t *TokenWebService) GetTokenByUserID(userID uuid.UUID) (*models.Token, error) {
 	token, err := t.store.Tokens.GetTokensByUserID(userID)
 	if err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func (t *TokenWebService) UpdateToken(token *models.Token) error {
 	return nil
 }
 
-func (t *TokenWebService) DeleteTokenByUserID(id int) error {
+func (t *TokenWebService) DeleteTokenByUserID(id uuid.UUID) error {
 	err := t.store.Tokens.DeleteTokensByUserID(id)
 	if err != nil {
 		return err

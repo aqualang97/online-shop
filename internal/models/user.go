@@ -12,6 +12,7 @@ type User struct {
 	Login        string     `json:"login"`
 	Email        string     `json:"email"`
 	PasswordHash string     `json:"passwordHash"`
+	Role         string     `json:"role"`
 	CreatedAt    *time.Time `json:"createdAt"`
 	UpdatedAt    *time.Time `json:"updatedAt"`
 }
@@ -24,6 +25,7 @@ type UserRegistrationRequest struct {
 
 type UserLoginRequest struct {
 	Email    string `json:"email"`
+	Login    string `json:"login"`
 	Password string `json:"password"`
 }
 

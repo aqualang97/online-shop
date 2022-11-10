@@ -31,21 +31,20 @@ func GenerateToken(userID uuid.UUID, lifeTimeMinutes int, secret string) (string
 func GetHashOfToken(tokenString string) (string, error) {
 	hashToken, err := bcrypt.GenerateFromPassword([]byte(tokenString), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println()
+		log.Println(err)
+		return "", err
 	}
 	return string(hashToken), err
 }
 
 func CompareHashTokenDBAndRequest(hashTokenDB, tokenReq string) bool {
 	if err := bcrypt.CompareHashAndPassword([]byte(hashTokenDB), []byte(tokenReq)); err != nil {
-		log.Println(err)
 		return false
 	}
 	return true
 }
 
 func GetTokenFromBearerString(bearerString string) string {
-	log.Println(bearerString)
 	if bearerString == "" {
 		return ""
 	}
@@ -64,7 +63,6 @@ func GetTokenFromBearerString(bearerString string) string {
 }
 
 func ValidateToken(tokenString, secret string) (bool, error) {
-
 	token, err := jwt.Parse(tokenString,
 		func(token *jwt.Token) (interface{}, error,
 		) {
@@ -76,7 +74,7 @@ func ValidateToken(tokenString, secret string) (bool, error) {
 	}
 
 	if !token.Valid {
-		return false, errors.New("Invalid token")
+		return false, errors.New("invalid token")
 	}
 
 	return true, nil

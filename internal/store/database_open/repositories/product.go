@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"online-shop/internal/models"
 )
 
@@ -50,25 +51,29 @@ func (p *ProductRepo) CreateProduct(product *models.Product) (*models.Product, e
 	if product == nil {
 		return nil, errors.New("incorrect product")
 	}
+	pid, err := product.ID.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
 	if p.TX != nil {
-		prepare, err := p.TX.Prepare("INSERT INTO products(product_name, external_product_id, category_id)" +
+		prepare, err := p.TX.Prepare("INSERT INTO products(id, product_name, external_product_id, category_id)" +
 			"VALUES ($1, $2, (SELECT pc.id FROM products_categories AS pc WHERE pc.category_name=$3))")
 		if err != nil {
 			return nil, err
 		}
-		err = prepare.QueryRow(product.Name, product.ExternalProductID, product.Category).Scan(&product.ID)
+		err = prepare.QueryRow(pid, product.Name, product.ExternalProductID, product.Category).Scan(&product.ID)
 		if err != nil {
 			return nil, err
 		}
 
 		return product, err
 	}
-	prepare, err := p.DB.Prepare("INSERT INTO products(product_name, external_product_id, category_id)" +
+	prepare, err := p.DB.Prepare("INSERT INTO products(id, product_name, external_product_id, category_id)" +
 		"VALUES ($1, $2, (SELECT pc.id FROM products_categories AS pc WHERE pc.category_name=$3)) RETURNING id")
 	if err != nil {
 		return nil, err
 	}
-	err = prepare.QueryRow(product.Name, product.ExternalProductID, product.Category).Scan(&product.ID)
+	err = prepare.QueryRow(pid, product.Name, product.ExternalProductID, product.Category).Scan(&product.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -107,9 +112,13 @@ func (p *ProductRepo) CreateProductSupplier(product *models.Product) error {
 	}
 	return nil
 }
-func (p *ProductRepo) GetProductInfo(id int) (*models.Product, error) {
-	if id == 0 {
+func (p *ProductRepo) GetProductInfo(id uuid.UUID) (*models.Product, error) {
+	if id == uuid.Nil {
 		return nil, errors.New("incorrect data")
+	}
+	pid, err := id.MarshalBinary()
+	if err != nil {
+		return nil, err
 	}
 	var product models.Product
 	if p.TX != nil {
@@ -120,7 +129,7 @@ func (p *ProductRepo) GetProductInfo(id int) (*models.Product, error) {
 		if err != nil {
 			return nil, err
 		}
-		err = prepare.QueryRow(id).Scan(&product.ID, &product.Name, &product.Category, &product.ExternalProductID,
+		err = prepare.QueryRow(pid).Scan(&product.ID, &product.Name, &product.Category, &product.ExternalProductID,
 			&product.ExternalSupplierID, &product.Price, &product.Image, &product.Description, &product.Quantity)
 		if err != nil {
 			return nil, err
@@ -135,7 +144,7 @@ func (p *ProductRepo) GetProductInfo(id int) (*models.Product, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = prepare.QueryRow(id).Scan(&product.ID, &product.Name, &product.Category, &product.ExternalProductID,
+	err = prepare.QueryRow(pid).Scan(&product.ID, &product.Name, &product.Category, &product.ExternalProductID,
 		&product.ExternalSupplierID, &product.Price, &product.Image, &product.Description, &product.Quantity)
 	if err != nil {
 		return nil, err
@@ -158,6 +167,7 @@ func (p *ProductRepo) GetAllProducts() (*[]models.Product, error) {
 		defer rows.Close()
 
 		for rows.Next() {
+
 			var product models.Product
 			err = rows.Scan(&product.ID, &product.Name, &product.Category, &product.ExternalProductID,
 				&product.ExternalSupplierID, &product.Price, &product.Image, &product.Description, &product.Quantity)
@@ -193,41 +203,49 @@ func (p *ProductRepo) GetAllProducts() (*[]models.Product, error) {
 
 }
 
-func (p *ProductRepo) UpdatePrice(id int, price float32) error {
-	if id <= 0 || price <= 0 {
+func (p *ProductRepo) UpdatePrice(id uuid.UUID, price float32) error {
+	if id == uuid.Nil || price <= 0 {
 		str := fmt.Sprintf("invalid data, %d, %f", id, price)
 		return errors.New(str)
 	}
+	pid, err := id.MarshalBinary()
+	if err != nil {
+		return err
+	}
 	if p.TX != nil {
 		_, err := p.TX.Exec("UPDATE products_suppliers SET price= $2 FROM products_suppliers "+
-			"INNER JOIN products p ON p.id = $1", id, price)
+			"INNER JOIN products p ON p.id = $1", pid, price)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	_, err := p.DB.Exec("UPDATE products_suppliers SET price= $2 FROM products_suppliers "+
-		"INNER JOIN products p ON p.id = $1", id, price)
+	_, err = p.DB.Exec("UPDATE products_suppliers SET price= $2 FROM products_suppliers "+
+		"INNER JOIN products p ON p.id = $1", pid, price)
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (p *ProductRepo) UpdateQuantity(id int, quantity float32) error {
-	if id <= 0 || quantity <= 0 {
+func (p *ProductRepo) UpdateQuantity(id uuid.UUID, quantity float32) error {
+	if id == uuid.Nil || quantity <= 0 {
 		str := fmt.Sprintf("invalid data, %d, %f", id, quantity)
 		return errors.New(str)
 	}
+	pid, err := id.MarshalBinary()
+	if err != nil {
+		return err
+	}
 	if p.TX != nil {
 		_, err := p.TX.Exec("UPDATE products_suppliers SET quantity= $2 FROM products_suppliers "+
-			"INNER JOIN products p ON p.id = $1", id, quantity)
+			"INNER JOIN products p ON p.id = $1", pid, quantity)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	_, err := p.DB.Exec("UPDATE products_suppliers SET quantity= $2 FROM products_suppliers "+
-		"INNER JOIN products p ON p.id = $1", id, quantity)
+	_, err = p.DB.Exec("UPDATE products_suppliers SET quantity= $2 FROM products_suppliers "+
+		"INNER JOIN products p ON p.id = $1", pid, quantity)
 	if err != nil {
 		return err
 	}
